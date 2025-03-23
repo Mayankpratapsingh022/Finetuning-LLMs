@@ -1,7 +1,4 @@
-# Finetuning-LLMs
-A collection of code and workflows for fine-tuning various Large Language Models (LLMs) on task-specific datasets
-
-### Finetuning Mistral-7B with qLoRA & PEFT on SAMSum Dataset
+# Finetuning Mistral-7B with qLoRA & PEFT on SAMSum Dataset
 
 This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model for text summarization using **Parameter-Efficient Fine-Tuning (PEFT)** and **Quantization** via **qLoRA**.
 
@@ -9,7 +6,7 @@ This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.
 [Mayank022/mistral-finetuned-samsum](https://huggingface.co/Mayank022/mistral-finetuned-samsum)
 
 
-### 📌 Project Highlights
+## 📌 Project Highlights
 
 - **Model**: [`Mistral-7B-Instruct-v0.1`](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
 - **Technique**: PEFT + LoRA + Quantization → `qLoRA`
@@ -17,7 +14,7 @@ This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.
 -  **Libraries**: `transformers`, `peft`, `bitsandbytes`, `trl`
 -  **Hardware**: Fine-tuned on NVIDIA A100 (80GB) 
 
-### 🛠️ Setup
+## 🛠️ Setup
 
 ```bash
 pip install accelerate peft bitsandbytes git+https://github.com/huggingface/transformers trl py7zr auto-gptq optimum
@@ -31,9 +28,9 @@ notebook_login()
 
 ---
 
-### Finetuning Script Summary
+##  Finetuning Script Summary
 
-#### 1. Load Tokenizer & Model with 4-bit Quantization
+### 1. Load Tokenizer & Model with 4-bit Quantization
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
@@ -55,7 +52,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 ---
 
-#### 2. Apply LoRA using PEFT
+### 2. Apply LoRA using PEFT
 
 ```python
 from peft import LoraConfig, get_peft_model
@@ -74,7 +71,7 @@ model = get_peft_model(model, peft_config)
 
 ---
 
-#### 3. Define Training Arguments
+### 3. Define Training Arguments
 
 ```python
 from transformers import TrainingArguments
@@ -93,7 +90,7 @@ training_args = TrainingArguments(
 
 ---
 
-#### 4. Fine-tune with `SFTTrainer`
+### 4. Fine-tune with `SFTTrainer`
 
 ```python
 from trl import SFTTrainer
@@ -111,7 +108,7 @@ trainer.train()
 
 ---
 
-### Save & Reload the Fine-Tuned Model
+## 💾 Save & Reload the Fine-Tuned Model
 
 ```python
 # Save
@@ -129,7 +126,7 @@ model = AutoPeftModelForCausalLM.from_pretrained(
 
 ---
 
-### 🧠 PEFT Recap
+## 🧠 PEFT Recap
 
 - Train only a **subset** of model parameters (e.g., Q and V projections).
 - Dramatically reduces training time and GPU memory.
