@@ -2,6 +2,8 @@
 A collection of code and workflows for fine-tuning various Large Language Models (LLMs) on task-specific datasets
 
 ### Finetuning Mistral-7B with qLoRA & PEFT on SAMSum Dataset
+![Mistral](https://github.com/user-attachments/assets/c7c3b873-9faf-4678-8b10-3cb57adc18a8)
+
 
 This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model for text summarization using **Parameter-Efficient Fine-Tuning (PEFT)** and **Quantization** via **qLoRA**.
 
