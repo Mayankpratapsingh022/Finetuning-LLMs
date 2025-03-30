@@ -1,6 +1,7 @@
 # Finetuning Mistral-7B with qLoRA & PEFT on SAMSum Dataset
 
 This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model for text summarization using **Parameter-Efficient Fine-Tuning (PEFT)** and **Quantization** via **qLoRA**.
+![Mistral](https://github.com/user-attachments/assets/4d34c1d9-ab03-4b36-84b1-8e806dbff633)
 
 **Check out the fine-tuned Mistral model on Hugging Face:**  
 [Mayank022/mistral-finetuned-samsum](https://huggingface.co/Mayank022/mistral-finetuned-samsum)
