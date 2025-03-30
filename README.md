@@ -1,159 +1,170 @@
 # Finetuning-LLMs
 A collection of code and workflows for fine-tuning various Large Language Models (LLMs) on task-specific datasets
 
-### Finetuning Mistral-7B with qLoRA & PEFT on SAMSum Dataset
-![Mistral](https://github.com/user-attachments/assets/c7c3b873-9faf-4678-8b10-3cb57adc18a8)
+![Finetuning_main](https://github.com/user-attachments/assets/299eab30-235b-4c3b-ab17-786dfa6e0eb4)
 
+# Fine-Tuning Large Language Models (LLMs)
 
-This project demonstrates how to fine-tune the powerful [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model for text summarization using **Parameter-Efficient Fine-Tuning (PEFT)** and **Quantization** via **qLoRA**.
+This repository provides a practical guide to fine-tuning various open-source LLMs such as LLaMA 2, Mistral, etc., using efficient techniques like LoRA and Quantization. We use tools like **Unsloth** to make training faster and more memory-efficient.
 
-**Check out the fine-tuned Mistral model on Hugging Face:**  
-[Mayank022/mistral-finetuned-samsum](https://huggingface.co/Mayank022/mistral-finetuned-samsum)
+---
 
+## Why Fine-Tuning?
 
-### 📌 Project Highlights
+Fine-tuning allows you to adapt a base LLM to your specific domain or task. Instead of relying solely on generic prompts or retrieval systems, you bake in behavior and knowledge directly into the model.
 
-- **Model**: [`Mistral-7B-Instruct-v0.1`](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
-- **Technique**: PEFT + LoRA + Quantization → `qLoRA`
--  **Dataset**: [SAMSum Dialogue Summarization Dataset](https://huggingface.co/datasets/Samsung/samsum)
--  **Libraries**: `transformers`, `peft`, `bitsandbytes`, `trl`
--  **Hardware**: Fine-tuned on NVIDIA A100 (80GB) 
+---
 
-### 🛠️ Setup
+## RAG vs Fine-Tuning
 
-```bash
-pip install accelerate peft bitsandbytes git+https://github.com/huggingface/transformers trl py7zr auto-gptq optimum
+| Category         | RAG (Retrieval-Augmented Generation) | Fine-Tuning                  |
+|------------------|--------------------------------------|------------------------------|
+| Setup            | Easy and dynamic                     | Requires training            |
+| Knowledge Type   | Real-time, updatable                 | Static (baked into weights)  |
+| Use Case         | General, flexible                    | Task-specific, specialized   |
+| Cost             | Depends on context length            | Cheaper for repeated queries |
+| Performance      | Limited by prompt size               | More accurate for niche tasks|
+
+Use **RAG** when you want flexibility and up-to-date knowledge. Use **Fine-Tuning** when you need:
+- Better performance for domain-specific tasks
+- Specialized behavior baked in
+- Smaller and faster models at inference time
+
+---
+
+## Benefits of Using Unsloth
+
+- 2x faster training
+- 70% less memory usage
+- Open-source and beginner-friendly
+
+---
+
+## Finetuning Pipeline Overview
+
+1. **Prepare the Training Data**
+2. **Choose a Base Model and Finetuning Method**
+3. **Evaluate & Iterate**
+4. **Deploy the Finetuned Model**
+
+Note: Fine-tuning is not always a linear process. Proper evaluation and iteration are important to get good results.
+
+---
+
+## Preparing the Dataset
+
+There are 3 ways to get training data:
+
+1. **Existing Datasets** – from HuggingFace, Kaggle, etc.
+2. **Manual Curation** – creating examples by hand
+3. **Synthetic Generation** – use another LLM to create examples
+
+### Recommended Format
+
+Many models expect data in `JSONL` format like this:
+
+```json
+{"messages": [
+  {"role": "system", "content": "You are a helpful assistant."},
+  {"role": "user", "content": "What is the capital of France?"},
+  {"role": "assistant", "content": "Paris."}
+]}
+
 ```
+## Choosing a Model
 
-Login to Hugging Face:
-```python
-from huggingface_hub import notebook_login
-notebook_login()
-```
+Factors to consider:
 
----
+- Inference cost and speed
+- Task requirements (chat, coding, reasoning, etc.)
+- Available hardware (VRAM)
 
-### Finetuning Script Summary
-
-#### 1. Load Tokenizer & Model with 4-bit Quantization
-
-```python
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-
-tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
-
-quant_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
-    bnb_4bit_use_double_quant=True
-)
-
-model = AutoModelForCausalLM.from_pretrained(
-    "mistralai/Mistral-7B-Instruct-v0.1",
-    quantization_config=quant_config,
-    device_map="auto"
-)
-```
+Popular open-source models:
+- LLaMA 2
+- Mistral
+- Phi
+- Falcon
+- Gemma
 
 ---
 
-#### 2. Apply LoRA using PEFT
+## Finetuning Techniques
 
-```python
-from peft import LoraConfig, get_peft_model
+### 1. Full Finetuning
 
-peft_config = LoraConfig(
-    r=16,
-    lora_alpha=16,
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM",
-    target_modules=["q_proj", "v_proj"]
-)
+- Updates all weights
+- Requires a lot of GPU memory
+- Higher compute cost
 
-model = get_peft_model(model, peft_config)
-```
+> Analogy: Rewriting the entire book.
 
----
+### 2. LoRA (Low-Rank Adaptation)
 
-#### 3. Define Training Arguments
+- Freezes original weights
+- Adds small adapter layers
+- Much faster and memory-efficient
 
-```python
-from transformers import TrainingArguments
+> Analogy: Adding sticky notes to a book for extra info.
 
-training_args = TrainingArguments(
-    output_dir="mistral-finetuned-samsum",
-    per_device_train_batch_size=8,
-    learning_rate=2e-4,
-    num_train_epochs=1,
-    logging_steps=100,
-    fp16=True,
-    save_strategy="epoch",
-    push_to_hub=True
-)
-```
+### 3. QLoRA
+
+- Combines quantization + LoRA
+- Enables training on low-VRAM setups
+- Ideal for 12GB to 24GB GPUs
 
 ---
 
-#### 4. Fine-tune with `SFTTrainer`
+## LoRA Weight Formula
 
-```python
-from trl import SFTTrainer
+Original:  
+  `X = W * Y`  
+LoRA:  
+  `X = (W + A * B) * Y`
 
-trainer = SFTTrainer(
-    model=model,
-    train_dataset=data,
-    tokenizer=tokenizer,
-    peft_config=peft_config,
-    args=training_args,
-)
-
-trainer.train()
-```
+Where:
+- `W` = frozen base weight
+- `A`, `B` = trainable low-rank matrices
 
 ---
 
-### Save & Reload the Fine-Tuned Model
+## Quantization
 
-```python
-# Save
-!cp -r mistral-finetuned-samsum /content/drive/MyDrive/model
+Reduces model weight precision to save memory:
 
-# Reload
-from peft import AutoPeftModelForCausalLM
+| Type      | Bit | Memory |
+|-----------|-----|--------|
+| float32   | 32  | 4 bytes |
+| float16   | 16  | 2 bytes |
+| int8      | 8   | 1 byte |
+| 4-bit     | 4   | 0.5 byte |
 
-model = AutoPeftModelForCausalLM.from_pretrained(
-    "/content/drive/MyDrive/model/mistral-finetuned-samsum",
-    torch_dtype=torch.float16,
-    device_map="cuda"
-)
-```
-
----
-
-### 🧠 PEFT Recap
-
-- Train only a **subset** of model parameters (e.g., Q and V projections).
-- Dramatically reduces training time and GPU memory.
-- Ideal for **domain adaptation**, **instruction tuning**, and **low-resource training**.
+Techniques:
+1. **Post-Training Quantization (PTQ)** – Quantize after training
+2. **Quantization Aware Training (QAT)** – Train with quantization effects
 
 ---
 
-## 💡 Useful Terms
+## Finetuning Tools & Platforms
 
-| Term        | Description                          |
-|-------------|--------------------------------------|
-| **PEFT**     | Parameter-Efficient Fine-Tuning      |
-| **LoRA**     | Low-Rank Adaptation for Transformers |
-| **Quantization** | Reducing precision to 8/4/2-bit  |
-| **qLoRA**    | Quantized LoRA                       |
-| **SFT**      | Supervised Fine-Tuning               |
+| Tool/Platform    | Type         | Notes                                     |
+|------------------|--------------|-------------------------------------------|
+| Unsloth          | Open Source  | Fast, memory-efficient LoRA + QLoRA       |
+| LLaMA Factory    | Open Source  | Supports full and PEFT finetuning         |
+| Together AI      | Hosted       | Provides APIs and finetuning platform     |
+| Fireworks AI     | Hosted       | LoRA-based finetuning service             |
+| RunPod, Modal    | Self-hosted  | Full control over training & deployment   |
 
 ---
 
-## 📎 References
 
-- [Mistral-7B on HuggingFace](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)
-- [LoRA Paper](https://arxiv.org/abs/2106.09685)
-- [PEFT Library](https://github.com/huggingface/peft)
-- [GGML, GPTQ, AutoGPTQ](https://github.com/qwopqwop200/AutoGPTQ)
+---
+
+## Summary
+
+Fine-tuning is an essential skill to make LLMs work better for your domain. With tools like Unsloth and LoRA, you can fine-tune even large models on consumer hardware.
+
+> Fine-tuning is most effective when RAG fails to provide depth or when inference costs need to be optimized.
+
+---
+
+
